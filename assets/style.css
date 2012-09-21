@@ -1,0 +1,41 @@
+/* Aw, yeah! */
+
+html {
+	font-family: 'Lora', serif;
+	color:#444;
+	background-image: url('scribble_light.png');
+}
+
+h1,h2,h3,h4,h5,h6 {
+	font-family: 'Francois One', sans-serif;
+}
+
+h1,h3,h4,h5,h6 {
+	color:#AE8486;
+}
+
+h2 {
+	color:#8E9EAE;
+}
+
+a {
+	color:#E39177;
+	text-decoration:none;
+}
+a:hover {
+	color:#FEA386;
+	text-decoration:underline;
+}
+
+blockquote {
+	border-left: 5px solid #444;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+li {
+	list-style-type:none;
+}
+
+::selection { background: #F7F789; color: #AE8486; }
+::-moz-selection { background: #F7F789; color: #AE8486; }
