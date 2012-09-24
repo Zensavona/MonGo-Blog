@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
+	//"labix.org/v2/mgo/bson"
 )
 
 type Note struct {
@@ -13,7 +13,7 @@ type Note struct {
 	Body string
 }
 
-func loadNotes() (Note) {
+func loadNotes() ([]Note) {
 	session, err := mgo.Dial("localhost")
     if err != nil {
             panic(err)
@@ -25,17 +25,19 @@ func loadNotes() (Note) {
 
     c := session.DB("test").C("notes")
 
-	note := Note{}
-    err = c.Find(bson.M{"_id": "some-shitty-title"}).One(&note)
+	notes := []Note{}
+    iter := c.Find(nil).Iter()
+    err = iter.All(&notes)
     if err != nil {
-            panic(err)
+        panic(iter.Err())
     }
 
-    return note
+    return notes
 }
 
 func main() {
-	post := loadNotes()
-
-	fmt.Println(post.Body)
+	notes := loadNotes()
+    for _, note := range notes {
+        fmt.Println(note.Title)
+    }
 }

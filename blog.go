@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"net/http"
+	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 )
 
 type Note struct {
