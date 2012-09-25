@@ -4,7 +4,7 @@
 ### Notes:
 <ul>
 {{#Notes}}
-<li><a href="note/{{Url}}.html">{{Title}}</a></li>
+<li><a href="note/{{Url}}.html">{{ Title }}</a></li>
 {{/Notes}}
 </ul>
 

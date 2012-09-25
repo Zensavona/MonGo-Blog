@@ -1,16 +1,14 @@
-package main
+package main 
 
 import (
 	"fmt"
-	"path"
-	"github.com/russross/blackfriday"
-	"github.com/hoisie/mustache"
-	"code.google.com/p/gorilla/mux"
-	"io/ioutil"
-	"strings"
-	"net/http"
 	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
+	//"labix.org/v2/mgo/bson"
+    "net/http"
+    "github.com/russross/blackfriday"
+    "github.com/hoisie/mustache"
+    "io/ioutil"
+    "strings"
 )
 
 type Note struct {
@@ -20,41 +18,27 @@ type Note struct {
 	Body string
 }
 
-const sep = "---"
-const notePath = "/note/"
-const lenPath = len(notePath)
-
-var notes = loadNotes()
+var notes []Note = loadNotes()
+var lenPath = len("/note/")
 
 // less than ideal
 var home, _ = ioutil.ReadFile("home.md")
 var homeMarkup = string(blackfriday.MarkdownCommon(home))
 
-func loadNotes() []Note {
-	files, _ := ioutil.ReadDir("notes/")
-	var notes []Note
-	for _, file := range files {
-		title := strings.Replace(file.Name(), ".md", "", -1)
-		notes = append(notes, *loadPost(title))
-	}
-	return notes
-}
-
-func getContent(title string) (content string) {
-	filename := title + ".md"
-    file, _ := ioutil.ReadFile(path.Join("notes", filename))
-    return string(file)
-}
-
-func loadPost(title string) *Note {
-	content := getContent(title)
-	sepLength := len(sep)
-    i := strings.LastIndex(content, sep)
-    headers := content[sepLength:i]
-    body := content[i+sepLength+1:]
-    meta := strings.Split(headers, "\n")
-    html := blackfriday.MarkdownCommon([]byte(body))
-    return &Note{title, meta[1], meta[2], string(html)}
+func loadNotes() ([]Note) {
+	session, err := mgo.Dial("localhost")
+    if err != nil {
+            panic(err)
+    }
+    defer session.Close()
+    c := session.DB("test").C("notes")
+	notes := []Note{}
+    iter := c.Find(nil).Iter()
+    err = iter.All(&notes)
+    if err != nil {
+        panic(iter.Err())
+    }
+    return notes
 }
 
 func loadTemplate(name string) string {
@@ -62,38 +46,32 @@ func loadTemplate(name string) string {
     return string(file)
 }
 
-func noteHandler(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    title := vars["note"]
-    title = strings.Replace(title, ".html", "", -1)
-    var rendered string
-	for _, note := range notes {
-		if note.Url == title {
-			rendered = mustache.RenderInLayout(note.Body, loadTemplate("note"), note)
-		}
-	}
-
-	if len(rendered) == 0 {
-		fmt.Fprintf(w, "404 page not found")
-	}
-	
-    fmt.Fprintf(w, rendered)
-}
-
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	var data struct {
+    var data struct {
         Notes []Note
     }
     data.Notes = notes
-	rendered := mustache.RenderInLayout(homeMarkup, loadTemplate("home"), data)
-	fmt.Fprintf(w, rendered)
+    rendered := mustache.RenderInLayout(homeMarkup, loadTemplate("home"), data)
+    fmt.Fprintf(w, rendered)
+}
+
+func noteHandler(w http.ResponseWriter, r *http.Request) {
+    title := strings.Replace(r.URL.Path[lenPath:], ".html", "", -1)
+    var rendered string
+    for _, note := range notes {
+        if note.Url == title {
+            rendered = mustache.RenderInLayout(note.Body, loadTemplate("note"), note)
+        }
+    }
+    if len(rendered) == 0 {
+        fmt.Fprintf(w, "404 page not found")
+    }
+    fmt.Fprintf(w, rendered)
 }
 
 func main() {
-	r := mux.NewRouter()
-	http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
-    r.HandleFunc("/", indexHandler)
-    r.HandleFunc(notePath+"{note}", noteHandler)
-    http.Handle("/", r)
+    http.Handle("/assets/", http.StripPrefix("/assets", http.FileServer(http.Dir("./assets"))))
+    http.HandleFunc("/", indexHandler)
+    http.HandleFunc("/note/", noteHandler)
     http.ListenAndServe(":8080", nil)
 }
