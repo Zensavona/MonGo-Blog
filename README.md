@@ -1,4 +1,4 @@
-Blog
+Blog [![Build Status](https://drone.io/github.com/Zensavona/MonGo-Blog/status.png)](https://drone.io/github.com/Zensavona/MonGo-Blog/latest)
 ====
 
 An extremely simple web blog application, written in Go. It uses markdown for notes (blog posts) and Moustache for templating.
